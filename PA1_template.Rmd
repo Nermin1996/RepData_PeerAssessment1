@@ -1,25 +1,68 @@
 ---
 title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
+output: html_document
+date: "2023-03-20"
 ---
 
 
 ## Loading and preprocessing the data
+### 1.1. Downloading and unzipping the necessary files
+```{r, echo=TRUE}
+URL <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip"
 
+if(!file.exists("activity.zip")){
+    download.file(URL, destfile = "activity.zip")
+}
+
+if(file.exists("activity.zip")){
+    unzip("activity.zip")
+}
+```
+### 1.2. loading necessary packages
+```{r, echo=TRUE, results='hold'}
+library(dplyr)
+library(lattice)
+```
+### 1.3. Reading the data
+```{r, echo=TRUE}
+activity <- read.csv("activity.csv", sep = ",")
+activity$date <- as.Date(activity$date)
+```
 
 
 ## What is mean total number of steps taken per day?
 
-
+```{r, echo=TRUE}
+with.na <-aggregate(steps ~ date, data= activity, sum, na.rm = TRUE)
+N <- summary(with.na)
+paste("With Na,", N[4,2])
+```
 
 ## What is the average daily activity pattern?
 
-
+```{r, echo=TRUE}
+av.steps <-aggregate(steps ~ interval, data= activity, mean, na.rm = TRUE)
+with(av.steps, plot(interval, steps, type ="l", main="Time series plot of the average daily activity pattern", col="red", lwd=2))
+```
 
 ## Imputing missing values
 
-
+### strategy: replacing NA values with their mean values corresponding to the interval
+```{r, echo=TRUE}
+paste("the number of Na values in the original dataset is", sum(is.na(activity)))
+na.steps <- activity[which(is.na(activity$steps)),]
+na.steps$steps <- av.steps$steps
+activity.new <- activity
+activity.new[which(is.na(activity.new$steps)),] <- na.steps
+```
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
+```{r, echo=TRUE}
+activity.vnew <- activity.new
+activity.vnew$weekdays <- weekdays(activity.new$date)
+activity.vnew$weekdays[activity.vnew$weekdays%in%c("Saturday", "Sunday")] <- "weekend"
+activity.vnew$weekdays[activity.vnew$weekdays%in%c("Monday", "Tuesday","Wednesday","Friday", "Thursday")] <- "weekday"
+activity.aggregated <- aggregate(steps ~ interval + weekdays, data=activity.vnew, mean)
+xyplot(activity.aggregated$steps~activity.aggregated$interval|activity.aggregated$weekdays, layout=c(1,2), type="l", main= "Average Number of Steps Taken across weekdays and weekends)",xlab = "Interval", ylab = "steps")
+```
