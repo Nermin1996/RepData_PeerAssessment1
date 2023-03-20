@@ -42,7 +42,7 @@ paste("With Na,", N[4,2])
 
 ```{r, echo=TRUE}
 av.steps <-aggregate(steps ~ interval, data= activity, mean, na.rm = TRUE)
-with(av.steps, plot(interval, steps, type ="l", main="Time series plot of the average daily activity pattern", col="red", lwd=2))
+plot(av.steps$interval, av.steps$steps, type ="l", main="Time series plot of the average daily activity pattern", col="red", lwd=2)
 ```
 
 ## Imputing missing values
