@@ -19,7 +19,7 @@ if(file.exists("activity.zip")){
 }
 ```
 ### 1.2. loading necessary packages
-```{r, echo=TRUE, results='hold'}
+```{r, echo=TRUE, results='hide'}
 library(dplyr)
 library(lattice)
 library(grDevices)
@@ -33,19 +33,29 @@ activity$date <- as.Date(activity$date)
 
 ## What is mean total number of steps taken per day?
 
+### 2. Histogram of the total number of steps taken each day
 ```{r, echo=TRUE}
 with.na <-aggregate(steps ~ date, data= activity, sum, na.rm = TRUE)
+hist(with.na$steps, xlab= "total number of steps",breaks = 20, main = "The total number of steps taken each day")
+```
+### 3. Mean and median number of steps taken each day
+```{r, echo=TRUE}
 N <- summary(with.na)
-paste("With Na,", N[4,2])
+paste("With Na,", N[4,2], N[3,2])
 ```
 
 ## What is the average daily activity pattern?
 
+### 4. Time series plot of the average number of steps taken
 ```{r, echo=TRUE}
 av.steps <-aggregate(steps ~ interval, data= activity, mean, na.rm = TRUE)
-plot(av.steps$interval, av.steps$steps, type ="l", main="Time series plot of the average daily activity pattern", col="red", lwd=2)
+with(av.steps, plot(interval, steps, type ="l", main="Time series plot of the average number of steps taken", col="red", lwd=2))
 ```
-
+### 5. The 5-minute interval that, on average, contains the maximum number of steps
+```{r, echo=TRUE}
+max.interval <- av.steps[which.max(av.steps$steps),]
+paste("The 5-minute interval that contains the maximum number of steps is", max.interval$interval)
+```
 ## Imputing missing values
 
 ### strategy: replacing NA values with their mean values corresponding to the interval
@@ -56,14 +66,24 @@ na.steps$steps <- av.steps$steps
 activity.new <- activity
 activity.new[which(is.na(activity.new$steps)),] <- na.steps
 ```
+### 6.1 the difference of mean and median values of total steps taken each day after imputing Na values
+```{r, echo=TRUE}
+activity.new.aggreagted <- aggregate(steps ~ date, data = activity.new, sum)
+M <- summary(activity.new.aggreagted)
+paste("without Na", M[4,2], M[3,2])
+```
+### 7. Histogram of the total number of steps taken each day after missing values are imputed
+```{r, echo=TRUE}
+hist(activity.new.aggreagted$steps, xlab = "Total number of steps", breaks = 20,main = "The total number of steps taken each day")
+```
 
 ## Are there differences in activity patterns between weekdays and weekends?
-
+### 8. Panel plot comparing the average number of steps taken per 5-minute interval across weekdays and weekends
 ```{r, echo=TRUE}
 activity.vnew <- activity.new
 activity.vnew$weekdays <- weekdays(activity.new$date)
 activity.vnew$weekdays[activity.vnew$weekdays%in%c("Saturday", "Sunday")] <- "weekend"
 activity.vnew$weekdays[activity.vnew$weekdays%in%c("Monday", "Tuesday","Wednesday","Friday", "Thursday")] <- "weekday"
 activity.aggregated <- aggregate(steps ~ interval + weekdays, data=activity.vnew, mean)
-xyplot(activity.aggregated$steps~activity.aggregated$interval|activity.aggregated$weekdays, layout=c(1,2), type="l", main= "Average Number of Steps Taken across weekdays and weekends)",xlab = "Interval", ylab = "steps")
+xyplot(activity.aggregated$steps~activity.aggregated$interval|activity.aggregated$weekdays, layout=c(1,2), type="l", main= "Average Number of Steps Taken (across all weekday days or weekend days)",xlab = "Interval", ylab = "steps")
 ```
